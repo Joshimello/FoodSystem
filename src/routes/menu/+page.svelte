@@ -1,26 +1,118 @@
 <script lang="ts">
-  export let data
-  const { popularFood, shops } = data
-  let value = 'C'
+  import { Modal, Portal, Card, Dropdown, Button, Badge } from 'stwui'
 
-  $: searchResults = popularFood.filter(({ name }) => name.includes(value))
+  let isModal = false, show
+  const openModal = id => {
+    isModal = true
+    show = id-1
+  }
+
+  let isCart = false
+  let cart = []
+  const addCart = id => {
+    isModal = false
+    cart = [...cart, foods[id]]
+  }
+  $: total = cart.reduce((acc, { price }) => acc + price, 0)
+
+  export let data
+  const { foods, shops } = data
+  let value
+
+  $: searchResults = foods.filter(({ name }) => name.includes(value))
 
 </script>
+
+<Portal>
+  {#if isModal}
+    <Modal handleClose={()=>isModal = false}>
+      <Modal.Content slot="content" class="p-4">
+        <Modal.Content.Body slot="body">
+          <div class="h-50 rounded-2xl overflow-hidden">
+            <img src={ foods[show].img }>
+          </div>
+          <div class="flex flex-col py-2">
+            <span class="flex items-center gap-1">
+              <div class="i-material-symbols-star text-rose-400 text-xl"/>
+              <span class="text-xl text-gray-400">
+                { foods[show].rating }
+              </span>
+            </span>
+            <span class="text-3xl font-serif">
+              { foods[show].name }
+            </span>
+          </div>
+          <div class="flex flex-col pb-4">
+            <span class="text-xl">
+              Description
+            </span>
+            <span class="text-gray-400">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </span>
+          </div>
+        </Modal.Content.Body>
+        <Modal.Content.Footer slot="footer" class="bg-rose-400 rounded-md flex flex-col h-max gap-4">
+          <div class="flex justify-between">
+            <span>
+              <span class="text-2xl font-bold text-white">
+                ${ foods[show].price }
+              </span>
+              <span class="text-xl text-white">
+                /meal
+              </span>
+            </span>
+            <div class="flex items-center">
+              <button class="bg-white/25 p-1 rounded-full">
+                <div class="i-material-symbols-remove text-2xl text-white"/>
+              </button>
+              <span class="text-2xl text-white px-4">
+                1
+              </span>
+              <button class="bg-white/25 p-1 rounded-full">
+                <div class="i-material-symbols-add text-2xl text-white"/>
+              </button>
+            </div>
+          </div>
+          <button class="bg-white/25 text-white text-xl px-6 py-2 rounded-full flex items-center gap-2 justify-center" on:click={()=>addCart(show)}>
+            <span>
+              Add to cart
+            </span>
+            <div class="i-material-symbols-arrow-forward text-2xl text-white"/>            
+          </button>
+        </Modal.Content.Footer>
+      </Modal.Content>
+    </Modal>
+  {/if}
+</Portal>
 
 <div class="flex justify-between p-4">
   <button>
     <div class="i-material-symbols-menu text-black text-3xl"/>
   </button>
+
   <div class="flex items-center gap-2">
     <div class="i-material-symbols-location-on-outline text-black text-2xl"/>
     <span class="text-xl">NTHU</span>
   </div>
-  <button class="relative">
-    <div class="i-material-symbols-shopping-cart text-black text-3xl"/>
-    <div class="absolute -top-2 -right-2 bg-rose-400 rounded-full w-5 h-5 flex justify-center items-center text-white text-xs">
-      3
-    </div>
-  </button>
+
+  <Dropdown bind:visible={ isCart }>
+    <button slot="trigger" class="relative" on:click={()=>isCart = true}>
+      <div class="i-material-symbols-shopping-cart text-black text-3xl"/>
+      <div class="absolute -top-2 -right-2 bg-rose-400 rounded-full w-5 h-5 flex justify-center items-center text-white text-xs">
+        { cart.length }
+      </div>
+    </button>
+    <Dropdown.Items slot="items">
+      {#each cart as { id, name, price, rating, img }}
+      <Dropdown.Items.Item label={ name }/>
+      {/each}
+      <Dropdown.Items.Item label={ 'Checkout $' + total } class="bg-rose-400 text-white" />
+    </Dropdown.Items>
+  </Dropdown>
+
+    
 </div>
 
 <div class="w-full px-4 pb-4">
@@ -48,19 +140,19 @@
   <span class="text-2xl text-black font-bold p-2">
     Search Results
   </span>
-  {#each searchResults as { name, price, rating, img }}
+  {#each searchResults as { id, name, price, rating, img }}
     <div class="w-full rounded-2xl bg-white flex p-4 gap-4">
       <div class="h-20 w-60 rounded-2xl bg-gray-200 overflow-hidden">
         <img class="object-cover w-full h-full" src="{ img }">
       </div>
       <div class="flex flex-col w-full justify-between py-2">
-        <span class="text-2xl font-serif">
+        <a class="text-2xl font-serif cursor-pointer" on:click={()=>openModal(id)}>
           { name }
-        </span>
+        </a>
         <div class="flex justify-between">
           <span>
             <span class="text-2xl font-bold text-rose-400">
-              { price }
+              ${ price }
             </span>
             <span class="text-xl text-gray-400">
               /meal
@@ -84,20 +176,20 @@
     Popular Food
   </span>
   <div class="flex pt-4 gap-4">
-    {#each popularFood.slice(0, 3) as { name, price, rating, img }}
+    {#each foods.slice(0, 3) as { id, name, price, rating, img }}
       <div class="w-full rounded-2xl bg-white flex-col p-4">
         <div class="h-30 w-full rounded-2xl bg-gray-200 mb-4 overflow-hidden">
           <img class="object-cover w-full h-full" src="{ img }">
         </div>
         <div class="flex">
-          <span class="text-2xl font-serif">
+          <a class="text-2xl font-serif cursor-pointer" on:click={()=>openModal(id)}>
             { name }
-          </span>
+          </a>
         </div>
         <div class="flex justify-between">
           <span>
             <span class="text-2xl font-bold text-rose-400">
-              { price }
+              ${ price }
             </span>
             <span class="text-xl text-gray-400">
               /meal
@@ -114,19 +206,19 @@
     {/each}
   </div>
   <div class="grid grid-cols-2 gap-4 mt-4">
-    {#each popularFood.slice(3, 7) as { name, price, rating, img }}
+    {#each foods.slice(3, 7) as { id, name, price, rating, img }}
       <div class="w-full rounded-2xl bg-white flex p-4 gap-4">
         <div class="h-30 w-60 rounded-2xl bg-gray-200 overflow-hidden">
           <img class="object-cover w-full h-full" src="{ img }">
         </div>
         <div class="flex flex-col w-full justify-between py-2">
-          <span class="text-2xl font-serif">
+          <a class="text-2xl font-serif cursor-pointer" on:click={()=>openModal(id)}>
             { name }
-          </span>
+          </a>
           <div class="flex justify-between">
             <span>
               <span class="text-2xl font-bold text-rose-400">
-                { price }
+                ${ price }
               </span>
               <span class="text-xl text-gray-400">
                 /meal
